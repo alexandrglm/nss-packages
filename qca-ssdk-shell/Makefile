@@ -39,6 +39,10 @@ QCASSDK_CONFIG_OPTS+= TOOL_PATH=$(CONFIG_TOOLCHAIN_BIN_PATH) \
                 ARCH=$(LINUX_KARCH)
 
 define Build/Compile
+	mkdir -p $(PKG_BUILD_DIR)/build/linux/USLIB
+	mkdir -p $(PKG_BUILD_DIR)/build/linux/SHELL
+	find $(PKG_BUILD_DIR)/src -name "*.c" | sed 's/.*\/\(.*\)\.c/\1.d/' | \
+		xargs -I {} touch $(PKG_BUILD_DIR)/build/linux/USLIB/{} $(PKG_BUILD_DIR)/build/linux/SHELL/{} || true
 	$(MAKE) -C $(PKG_BUILD_DIR) $(PKG_JOBS) $(strip $(QCASSDK_CONFIG_OPTS))
 endef
 
