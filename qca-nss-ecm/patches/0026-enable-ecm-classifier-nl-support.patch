@@ -1,5 +1,5 @@
---- /home/dev/Desktop/AX3600/01_MIS_COMPILS/openwrt_ax3600_USBmod/openwrt_rel20260713/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/qca-nss-ecm-12.5.2024.11.06~30fbfa4/ecm_classifier_nl.c.original	2026-07-17 09:38:40.847826338 +0200
-+++ /home/dev/Desktop/AX3600/01_MIS_COMPILS/openwrt_ax3600_USBmod/openwrt_rel20260713/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/qca-nss-ecm-12.5.2024.11.06~30fbfa4/ecm_classifier_nl.c	2026-07-17 09:34:54.163827203 +0200
+--- ecm_classifier_nl.c.original	2026-07-17 09:49:27.611823871 +0200
++++ ecm_classifier_nl.c	2026-07-17 09:49:39.687823825 +0200
 @@ -145,7 +145,7 @@
  };
  
