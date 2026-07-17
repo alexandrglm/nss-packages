@@ -71,24 +71,20 @@ EXTRA_CFLAGS+= \
 		 -I$(STAGING_DIR)/usr/include/qca-mcs \
 		 -I$(STAGING_DIR)/usr/include/nat46
 
-ifneq (, $(findstring $(CONFIG_TARGET_BOARD), "qualcommax" "ipq60xx"))
 ECM_MAKE_OPTS+= ECM_NON_PORTED_SUPPORT_ENABLE=y \
 			   ECM_INTERFACE_VLAN_ENABLE=y \
 			   ECM_CLASSIFIER_MARK_ENABLE=y \
 			   ECM_CLASSIFIER_DSCP_ENABLE=y \
 			   ECM_CLASSIFIER_PCC_ENABLE=n
-endif
 
 ifneq ($(CONFIG_PACKAGE_kmod-qca-nss-drv),)
 ECM_MAKE_OPTS+=ECM_FRONT_END_NSS_ENABLE=y
 endif
 
-# Disable ECM IPv6 support when global IPv6 support is disabled.
 ifneq ($(CONFIG_IPV6),)
 ECM_MAKE_OPTS+=ECM_IPV6_ENABLE=y
 endif
 
-# Disable ECM Bridge VLAN Filtering support when global kernel config is disabled
 ifneq ($(CONFIG_BRIDGE_VLAN_FILTERING),)
 ECM_MAKE_OPTS+=ECM_BRIDGE_VLAN_FILTERING_ENABLE=y
 endif
