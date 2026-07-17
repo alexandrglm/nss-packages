@@ -1,0 +1,110 @@
+--- /home/dev/Desktop/AX3600/01_MIS_COMPILS/openwrt_ax3600_USBmod/openwrt_rel20260713/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/qca-nss-ecm-12.5.2024.11.06~30fbfa4/ecm_classifier_nl.c.original	2026-07-17 09:38:40.847826338 +0200
++++ /home/dev/Desktop/AX3600/01_MIS_COMPILS/openwrt_ax3600_USBmod/openwrt_rel20260713/build_dir/target-aarch64_cortex-a53_musl/linux-qualcommax_ipq807x/qca-nss-ecm-12.5.2024.11.06~30fbfa4/ecm_classifier_nl.c	2026-07-17 09:34:54.163827203 +0200
+@@ -145,7 +145,7 @@
+ };
+ 
+ static struct genl_family ecm_cl_nl_genl_family = {
+-	.id = GENL_ID_GENERATE,
++	.id = 0,
+ 	.hdrsize = 0,
+ 	.name = ECM_CL_NL_GENL_NAME,
+ 	.version = ECM_CL_NL_GENL_VERSION,
+@@ -213,12 +213,7 @@
+ 		return ret;
+ 	}
+ 
+-	ret = genlmsg_end(skb, msg_head);
+-	if (ret < 0) {
+-		DEBUG_WARN("failed to finalize genl msg: %d\n", ret);
+-		nlmsg_free(skb);
+-		return ret;
+-	}
++	genlmsg_end(skb, msg_head);
+ 
+ 	/* genlmsg_multicast frees the skb in both success and error cases */
+ 	ret = genlmsg_multicast(&ecm_cl_nl_genl_family,
+@@ -578,7 +573,7 @@
+ #if defined(CONFIG_NF_CONNTRACK_MARK)
+ void
+ ecm_classifier_nl_process_mark(struct ecm_classifier_nl_instance *cnli,
+-			       uint32_t mark)
++							   uint32_t mark)
+ {
+ 	bool updated;
+ 	ecm_front_end_acceleration_mode_t accel_mode;
+@@ -597,7 +592,7 @@
+ 		cnli->process_response.flow_qos_tag = mark;
+ 		cnli->process_response.return_qos_tag = mark;
+ 		cnli->process_response.process_actions |=
+-			ECM_CLASSIFIER_PROCESS_ACTION_QOS_TAG;
++		ECM_CLASSIFIER_PROCESS_ACTION_QOS_TAG;
+ 		updated = true;
+ 	}
+ 	spin_unlock_bh(&ecm_classifier_nl_lock);
+@@ -624,17 +619,9 @@
+ 		return;
+ 	}
+ 	feci = ecm_db_connection_front_end_get_and_ref(ci);
+-	accel_mode = ecm_front_end_connection_accel_state_get(feci);
+-	if ((accel_mode == ECM_FRONT_END_ACCELERATION_MODE_ACCEL)
+-			|| (accel_mode == ECM_FRONT_END_ACCELERATION_MODE_ACCEL_PENDING)) {
+-		DEBUG_TRACE("%px: mark changed on offloaded connection, decelerate. new mark: 0x%08x\n",
+-			    cnli, mark);
++	if (feci) {
+ 		feci->decelerate(feci);
+-	} else {
+-		DEBUG_TRACE("%px: mark changed on non-offloaded connection. new mark: 0x%08x\n",
+-			    cnli, mark);
+ 	}
+-	ecm_front_end_connection_deref(feci);
+ 	ecm_db_connection_deref(ci);
+ }
+ EXPORT_SYMBOL(ecm_classifier_nl_process_mark);
+@@ -645,8 +632,8 @@
+  *	Process new data for connection
+  */
+ static void ecm_classifier_nl_process(struct ecm_classifier_instance *aci, ecm_tracker_sender_type_t sender,
+-						struct ecm_tracker_ip_header *ip_hdr, struct sk_buff *skb,
+-						struct ecm_classifier_process_response *process_response)
++									  struct ecm_tracker_ip_header *ip_hdr, struct sk_buff *skb,
++									  struct ecm_classifier_process_response *process_response)
+ {
+ 	struct ecm_classifier_nl_instance *cnli;
+ 	ecm_classifier_relevence_t relevance;
+@@ -682,11 +669,7 @@
+ 	relevance = ECM_CLASSIFIER_RELEVANCE_NO;
+ 	ci = ecm_db_connection_serial_find_and_ref(cnli->ci_serial);
+ 	if (ci) {
+-		struct ecm_front_end_connection_instance *feci;
+-		feci = ecm_db_connection_front_end_get_and_ref(ci);
+-		accel_mode = ecm_front_end_connection_accel_state_get(feci);
+-		ecm_front_end_connection_deref(feci);
+-		if (enabled && ECM_FRONT_END_ACCELERATION_POSSIBLE(accel_mode) && ecm_db_connection_is_routed_get(ci)) {
++		if (enabled && ecm_db_connection_is_routed_get(ci)) {
+ 			relevance = ECM_CLASSIFIER_RELEVANCE_YES;
+ 			became_relevant = ecm_db_time_get();
+ 		}
+@@ -1405,10 +1388,20 @@
+ 
+ static int ecm_classifier_nl_register_genl(void)
+ {
++	int ret;
++
++	ecm_cl_nl_genl_family.ops = ecm_cl_nl_genl_ops;
++	ecm_cl_nl_genl_family.n_ops = ARRAY_SIZE(ecm_cl_nl_genl_ops);
++	ecm_cl_nl_genl_family.mcgrps = ecm_cl_nl_genl_mcgrp;
++	ecm_cl_nl_genl_family.n_mcgrps = ARRAY_SIZE(ecm_cl_nl_genl_mcgrp);
+ 
+-	return genl_register_family_with_ops_groups(&ecm_cl_nl_genl_family,
+-						      ecm_cl_nl_genl_ops,
+-						      ecm_cl_nl_genl_mcgrp);
++	ret = genl_register_family(&ecm_cl_nl_genl_family);
++	if (ret < 0) {
++		DEBUG_ERROR("genl_register_family failed: %d\n", ret);
++		return ret;
++	}
++
++	return 0;
+ }
+ 
+ static void ecm_classifier_nl_unregister_genl(void)
